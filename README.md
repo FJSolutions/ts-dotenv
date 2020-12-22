@@ -34,8 +34,8 @@ export class Env {
   @Prop({ name: 'TEMP' })
   public TempFolder = ''
 
-  @Prop({ default: () => 'development' })
-  public NODE_ENV = ''
+  @Prop()
+  public NODE_ENV = 'development'
 
   fullName() {
     return `${this.firstName} ${this.surname}`.trim()
