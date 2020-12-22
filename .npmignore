@@ -1,0 +1,11 @@
+.vscode/**
+.git
+node_modules/**
+src/**
+tests/**
+coverage/**
+.env
+.prettierrc
+.gitignore
+japaFile.ts
+tsconfig.json

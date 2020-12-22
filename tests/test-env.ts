@@ -18,13 +18,13 @@ export class Env {
   public TEST_BOOL?: boolean
 
   @Prop({ type: Boolean, optional: true })
-  public TEST_BOOL_TOO?: boolean
+  public TEST_BOOL_TOO = false
 
   @Prop({ name: 'TEMP' })
   public TempFolder?: string
 
-  @Prop({ default: () => 'development' })
-  public NODE_ENV?: string
+  @Prop()
+  public NODE_ENV = 'development'
 
   fullName() {
     return `${this.firstName} ${this.surname}`.trim()

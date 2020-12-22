@@ -14,28 +14,28 @@ import { Prop, initialize } from '../src/index'
 
 export class Env {
   @Prop({ name: 'TEST_INT', type: Number, optional: false })
-  public age?: number
+  public age = 0
 
   @Prop()
-  public TEST_STRING?: string
+  public TEST_STRING = ''
 
   @Prop({ name: 'FIRST_NAME' })
-  public firstName?: string
+  public firstName = ''
 
   @Prop({ name: 'SURNAME' })
-  public surname?: string
+  public surname = ''
 
   @Prop({ type: Boolean, default: () => true })
-  public TEST_BOOL?: boolean
+  public TEST_BOOL = false
 
   @Prop({ type: Boolean, optional: true })
-  public TEST_BOOL_TOO?: boolean
+  public TEST_BOOL_TOO = false
 
   @Prop({ name: 'TEMP' })
-  public TempFolder?: string
+  public TempFolder = ''
 
   @Prop({ default: () => 'development' })
-  public NODE_ENV?: string
+  public NODE_ENV = ''
 
   fullName() {
     return `${this.firstName} ${this.surname}`.trim()
@@ -51,6 +51,8 @@ export default env
 
 - The first import in this file is `reflect-metadata`. This must be first in order to ensure that the decorators work
   properly.
+- Initializing the properties in this class is safe, because these values will be overwritten if the module is
+  initialized successfully, or used as a default value if no `default` function is provided.
 
 ### @Prop properties and defaults
 
@@ -64,6 +66,9 @@ The simplest form of decoration of a property is `@Prop()`. This accepts all the
   cannot be found in the `.env` file or `process.env` will generate errors. Defaults to `false` (= required).
 - `default`: A argument-less function that returns a default value if nothing is found in the `.env` file or
   `process.env`.
+
+**NB** This class is constructed in the `initialize()` function, so it must have a default, parameter-less constructor;
+but, any function defined on this class which accesses local variables will be available on the result.
 
 ## Usage
 

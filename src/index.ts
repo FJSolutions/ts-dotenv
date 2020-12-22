@@ -90,7 +90,10 @@ export const Prop = (prop?: PropertyMapper): any => {
 /**
  * Loads the `.env` file and reads its values, overriding them with those found in  `process.env`, and validating that all required values are present.
  * */
-export const initialize = <T extends Object>(mapper: { new (): T }, dotEnvFileName: string = ''): EnvResult<T> => {
+export const initialize = <T extends Object>(
+  mapper: { new (): T; [key: string]: any },
+  dotEnvFileName: string = '',
+): EnvResult<T> => {
   const errors = new Array<string>()
 
   // Find the .env file and read it into a Map
@@ -133,6 +136,8 @@ export const initialize = <T extends Object>(mapper: { new (): T }, dotEnvFileNa
     if (!value) {
       if (meta.default) {
         value = meta.default()
+      } else {
+        value = obj[propertyName]
       }
     } else if (meta.type === Number) {
       value = parseNumber(value, errors)
