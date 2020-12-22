@@ -1,6 +1,6 @@
 {
   "name": "@fjsolutions/ts-dotenv",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A strongly typed wrapper for accessing values from a .env file and process.env ",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
