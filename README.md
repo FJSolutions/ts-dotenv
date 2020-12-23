@@ -3,6 +3,8 @@
 Is a strongly `TypeScript` module for accessing values from a .env file and process.env and providing a strongly typed
 interface to those properties using decorators.
 
+I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use decorators instead of a configuration object. 
+
 ## Configuration
 
 Create a file (e.g. `environment.ts`) that will define a class to contain the properties defined in the `.env` file, and
