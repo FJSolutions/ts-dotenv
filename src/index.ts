@@ -1,20 +1,31 @@
 import path from 'path'
 import fs from 'fs'
-import DotEnvError from './dotEnvError'
+// import DotEnvError from './dotEnvError'
 import { parseBoolean, parseNumber } from './parseUtils'
-import { PropertyMapper, Type, StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper } from './types'
+import { Type, StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper, CommonPropertyMapper } from './types'
 
 /** Private module-level property that holds the property metadata */
 const _propertyMetadata = new Map<string, PropertyMetadata>()
 
 /** Private class that holds the normalized property metadata */
-class PropertyMetadata implements PropertyMapper {
-  constructor(mapper: PropertyMapper, type: Type, public propertyName: string, choices?: string[]) {
+class PropertyMetadata implements CommonPropertyMapper {
+  constructor(
+    mapper: CommonPropertyMapper,
+    type: Type,
+    public propertyName: string,
+    choices?: string[],
+    regex?: RegExp,
+    min?: number,
+    max?: number,
+  ) {
     this.name = mapper.name || propertyName
     this.type = type || String
     this.optional = mapper.optional || false
     this.default = mapper.default || undefined
     this.choices = choices
+    this.regex = regex
+    this.min = min
+    this.max = max
   }
 
   public readonly name: string
@@ -26,6 +37,12 @@ class PropertyMetadata implements PropertyMapper {
   public readonly default?: () => any
 
   public readonly choices?: string[]
+
+  public readonly regex?: RegExp
+
+  public readonly min?: number
+
+  public readonly max?: number
 }
 
 class EnvResult<T extends Object> {
@@ -62,29 +79,13 @@ class EnvResult<T extends Object> {
 }
 
 /**
- * A property decorator for a `.env` mapping class property
- *
- * @param prop The property definition object
- *
- * @deprecated This decorator has been deprecated in favour of the type specific decorators
- */
-export const Prop = (prop?: PropertyMapper): any => {
-  return (objectTarget: any, propertyName: string) => {
-    const meta = new PropertyMetadata(prop || {}, prop?.type || String, propertyName)
-    _propertyMetadata.set(propertyName, meta)
-
-    return null
-  }
-}
-
-/**
  * A decorator for a string property in the `.env` file or `process.env`
  *
  * @param prop The property mapping definition object
  */
 export const EnvString = (prop?: StringPropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
-    const meta = new PropertyMetadata(prop || { type: String }, String, propertyName, prop?.choices)
+    const meta = new PropertyMetadata(prop || {}, String, propertyName, prop?.choices, prop?.regex)
     _propertyMetadata.set(propertyName, meta)
 
     return null
@@ -98,7 +99,7 @@ export const EnvString = (prop?: StringPropertyMapper): any => {
  */
 export const EnvNumber = (prop?: NumberPropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
-    const meta = new PropertyMetadata(prop || {}, Number, propertyName)
+    const meta = new PropertyMetadata(prop || {}, Number, propertyName, [], undefined, prop?.min, prop?.max)
     _propertyMetadata.set(propertyName, meta)
 
     return null
@@ -186,7 +187,7 @@ export const initialize = <T extends Object>(
     if (!value) {
       if (!meta.optional) {
         errors.push(
-          `The property '${propertyName}' was not marked optional but has no value in the .env file or process.env, and no default was supplied.`,
+          `The property '${propertyName}' was not marked as optional but has no value in the .env file or process.env, and no default was supplied.`,
         )
       } else if (meta.type === Number) {
         value = 0
@@ -195,9 +196,33 @@ export const initialize = <T extends Object>(
       } else {
         value = ''
       }
-    } else if (meta.type === String && !meta.optional && meta.choices && meta.choices.length > 0) {
-      if (!meta.choices.some(c => c === value)) {
-        errors.push(`'${value}' is not a choice from [${meta.choices.join(', ')}]`)
+    } else if (meta.type === String && !meta.optional) {
+      if (meta.choices && meta.choices.length > 0) {
+        if (!meta.choices.some(c => c === value)) {
+          errors.push(`'${value}' is not a choice from [${meta.choices.join(', ')}]`)
+        }
+      }
+
+      if (meta.regex) {
+        console.log(`Testing '${value}' with '${meta.regex.source}': '${meta.regex.test(value)}' `)
+
+        if (!meta.regex.test(value)) {
+          errors.push(
+            `The value '${value}' for '${propertyName}' does not match the RegEx '${meta.regex.source}' on property '${propertyName}' ('${meta.name}')`,
+          )
+        }
+      }
+    } else if (meta.type === Number) {
+      if (typeof meta.min !== 'undefined' && value < meta.min) {
+        errors.push(
+          `The value '${value}' is less than the minimum value of '${meta.min}' specified for the property '${propertyName}' ('${meta.name}').`,
+        )
+      }
+
+      if (typeof meta.max !== 'undefined' && value > meta.max) {
+        errors.push(
+          `The value '${value}' is greater than the maximum value of '${meta.max}' specified for the property'${propertyName}' ('${meta.name}').`,
+        )
       }
     }
 

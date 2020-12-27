@@ -1,28 +1,6 @@
 export type Type = StringConstructor | NumberConstructor | BooleanConstructor
 
-export interface PropertyMapper {
-  /**
-   * The name of the property in the `.env` file, or in `process.env`
-   */
-  name?: string
-
-  /**
-   * The type of the `.env` value to cast to the property
-   */
-  type?: Type
-
-  /**
-   * Indicates whether the value is optional or not
-   */
-  optional?: boolean
-
-  /**
-   * A function that will create a default value for the value
-   */
-  default?: () => any
-}
-
-interface CommonPropertyMapper {
+export interface CommonPropertyMapper {
   /**
    * The name of the property in the `.env` file, or in `process.env`
    */
@@ -49,6 +27,11 @@ export interface StringPropertyMapper extends CommonPropertyMapper {
    * A list of choices, of which the the value must be one
    */
   choices?: string[]
+
+  /**
+   * A regular expression to test the value of the property against
+   */
+  regex?: RegExp
 }
 
 export interface NumberPropertyMapper extends CommonPropertyMapper {
@@ -56,6 +39,16 @@ export interface NumberPropertyMapper extends CommonPropertyMapper {
    * A function that will create a default value for the property
    */
   default?: () => Number
+
+  /**
+   * A minimum number that the property must not be below (inclusive)
+   */
+  min?: number
+
+  /**
+   * A maximum number that the property must not exceed (inclusive)
+   */
+  max?: number
 }
 
 export interface BooleanPropertyMapper extends CommonPropertyMapper {
