@@ -1,14 +1,13 @@
-# ts-dotenv
+# type-env
 
 Is a strongly `TypeScript` module for accessing values from a .env file and process.env and providing a strongly typed
 interface to those properties using decorators.
 
-I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use
-decorators instead of a configuration object.
+I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use decorators instead of a configuration object.
 
 ## Configuration
 
-Create a file (e.g. `environment.ts`) that will define a class to contain the properties defined in the `.env` file, and
+Create a file (eg. `environment.ts`) that will define a class to contain the properties defined in the `.env` file, and
 annotate them with the `@Prop` decorator.
 
 ```js
@@ -64,7 +63,7 @@ Called without a configuration object, all the configuration defaults are used:
 
 - `name`: The make of the property in the `.env` file, or property name on `process.env`. Defaults to the name of the
   property it is decorating.
-- `optional`: A boolean flag indicating whether the property is optional or not; `optional = false` properties that
+- `optional`: A Boolean flag indicating whether the property is optional or not; `optional = false` properties that
   cannot be found in the `.env` file or `process.env` will generate errors. Defaults to `false` (= required).
 - `default`: A argument-less function that returns a default value if nothing is found in the `.env` file or
   `process.env`. If this is not supplied the value of the class property is used as a default
@@ -107,5 +106,5 @@ console.log(Env.environment.TEST_STRING)
   - To prevent `process.env` overwriting a value
   - To throw errors on processing
   - Case insensitive matching
-  - Extended matching of booleans
+  - Extended matching of Booleans
     - Supply own list of options
