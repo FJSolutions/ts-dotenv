@@ -3,7 +3,8 @@
 Is a strongly `TypeScript` module for accessing values from a .env file and process.env and providing a strongly typed
 interface to those properties using decorators.
 
-I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use decorators instead of a configuration object. 
+I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use
+decorators instead of a configuration object.
 
 ## Configuration
 
@@ -15,28 +16,28 @@ import 'reflect-metadata'
 import { Prop, initialize } from '../src/index'
 
 export class Env {
-  @Prop({ name: 'TEST_INT', type: Number, optional: false })
-  public age = 0
+  @EnvNumber({ name: 'TEST_INT', optional: false })
+  public age?: number
 
-  @Prop()
-  public TEST_STRING = ''
+  @EnvString()
+  public TEST_STRING?: string
 
-  @Prop({ name: 'FIRST_NAME' })
-  public firstName = ''
+  @EnvString({ name: 'FIRST_NAME' })
+  public firstName?: string
 
-  @Prop({ name: 'SURNAME' })
-  public surname = ''
+  @EnvString({ name: 'SURNAME' })
+  public surname?: string
 
-  @Prop({ type: Boolean, default: () => true })
-  public TEST_BOOL = false
+  @EnvBoolean({ default: () => true })
+  public TEST_BOOL?: boolean
 
-  @Prop({ type: Boolean, optional: true })
+  @EnvBoolean({ optional: true })
   public TEST_BOOL_TOO = false
 
-  @Prop({ name: 'TEMP' })
-  public TempFolder = ''
+  @EnvString({ name: 'TEMP' })
+  public TempFolder?: string
 
-  @Prop()
+  @EnvString({ choices: ['development', 'production'] })
   public NODE_ENV = 'development'
 
   fullName() {
@@ -58,19 +59,23 @@ export default env
 
 ### @Prop properties and defaults
 
-The simplest form of decoration of a property is `@Prop()`. This accepts all the configuration defaults:
+The simplest form of decoration of a property is to us an decorator for the property type, such as `@EnvString()`.
+Called without a configuration object, all the configuration defaults are used:
 
 - `name`: The make of the property in the `.env` file, or property name on `process.env`. Defaults to the name of the
   property it is decorating.
-- `type`: The `javascript` type to coerce the string value read from `.env` or retrieved from `process.env`. Options are
-  `String`, `Number`, and `Boolean`. Defaults to `String`.
 - `optional`: A boolean flag indicating whether the property is optional or not; `optional = false` properties that
   cannot be found in the `.env` file or `process.env` will generate errors. Defaults to `false` (= required).
 - `default`: A argument-less function that returns a default value if nothing is found in the `.env` file or
-  `process.env`.
+  `process.env`. If this is not supplied the value of the class property is used as a default
 
 **NB** This class is constructed in the `initialize()` function, so it must have a default, parameter-less constructor;
 but, any function defined on this class which accesses local variables will be available on the result.
+
+### String Property Mapping
+
+- `choices`: An optional array of valid choices; one of which must be the value of the property (By default the check is
+  case sensitive).
 
 ## Usage
 
@@ -89,3 +94,20 @@ console.log(Env.environment.TEST_STRING)
 ```
 
 **NB** `Env.environment` will be an empty object if `Env.hasErrors` is true!
+
+## Completed
+
+## ToDo
+
+- Add additional test files
+  - For type specific decorators
+- String Property
+  - Add a `regex` option for checking set value
+- Number Property
+  - A min and max value (inclusive)
+- And options object:
+  - To prevent `process.env` overwriting a value
+  - To throw errors on processing
+  - Case insensitive matching
+  - Extended matching of booleans
+    - Supply own list of options

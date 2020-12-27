@@ -1,43 +1,20 @@
-import 'reflect-metadata'
 import path from 'path'
 import fs from 'fs'
-import DotEnvError from './DotEnvError'
-import { parseBoolean, parseNumber } from './ParseUtils'
+import DotEnvError from './dotEnvError'
+import { parseBoolean, parseNumber } from './parseUtils'
+import { PropertyMapper, Type, StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper } from './types'
 
 /** Private module-level property that holds the property metadata */
 const _propertyMetadata = new Map<string, PropertyMetadata>()
 
-type Type = StringConstructor | NumberConstructor | BooleanConstructor
-
-interface PropertyMapper {
-  /**
-   * The name of the property in the `.env` file, or in `process.env`
-   */
-  name?: string
-
-  /**
-   * The type of the `.env` value to cast to the property
-   */
-  type?: Type
-
-  /**
-   * Indicates whether the value is optional or not
-   */
-  optional?: boolean
-
-  /**
-   * A function that will create a default value for the value
-   */
-  default?: () => any
-}
-
 /** Private class that holds the normalized property metadata */
 class PropertyMetadata implements PropertyMapper {
-  constructor(mapper: PropertyMapper, public propertyName: string) {
+  constructor(mapper: PropertyMapper, type: Type, public propertyName: string, choices?: string[]) {
     this.name = mapper.name || propertyName
-    this.type = mapper.type || String
+    this.type = type || String
     this.optional = mapper.optional || false
     this.default = mapper.default || undefined
+    this.choices = choices
   }
 
   public readonly name: string
@@ -47,29 +24,40 @@ class PropertyMetadata implements PropertyMapper {
   public readonly optional: boolean
 
   public readonly default?: () => any
+
+  public readonly choices?: string[]
 }
 
 class EnvResult<T extends Object> {
-  private constructor(private _env: T = {} as T, private _errors: string[]) {}
+  private constructor(private _env: T = {} as T, private _errors: readonly string[]) {}
 
+  /**
+   * Gets the populated environment class, or and empty object if there were loading errors.
+   */
   public get environment(): T {
     return this._env
   }
 
-  public get errors(): string[] {
+  /**
+   * Gets the list of errors
+   */
+  public get errors(): readonly string[] {
     return this._errors
   }
 
+  /**
+   * Indicates whether this is an error result or not
+   */
   public get hasErrors(): boolean {
     return this._errors && this._errors.length > 0 ? true : false
   }
 
   public static createSuccess<T extends Object>(env: T) {
-    return new EnvResult<T>(env, [])
+    return new EnvResult<T>(env, Object.freeze([]))
   }
 
   public static createFailure<T extends Object>(errors: string[]) {
-    return new EnvResult<T>({} as T, errors)
+    return new EnvResult<T>({} as T, Object.freeze(errors))
   }
 }
 
@@ -77,10 +65,55 @@ class EnvResult<T extends Object> {
  * A property decorator for a `.env` mapping class property
  *
  * @param prop The property definition object
+ *
+ * @deprecated This decorator has been deprecated in favour of the type specific decorators
  */
 export const Prop = (prop?: PropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
-    const meta = new PropertyMetadata(prop || {}, propertyName)
+    const meta = new PropertyMetadata(prop || {}, prop?.type || String, propertyName)
+    _propertyMetadata.set(propertyName, meta)
+
+    return null
+  }
+}
+
+/**
+ * A decorator for a string property in the `.env` file or `process.env`
+ *
+ * @param prop The property mapping definition object
+ */
+export const EnvString = (prop?: StringPropertyMapper): any => {
+  return (objectTarget: any, propertyName: string) => {
+    const meta = new PropertyMetadata(prop || { type: String }, String, propertyName, prop?.choices)
+    _propertyMetadata.set(propertyName, meta)
+
+    return null
+  }
+}
+
+/**
+ * A decorator for a numeric property in the `.env` file or `process.env`
+ *
+ * @param prop The property mapping definition object
+ */
+export const EnvNumber = (prop?: NumberPropertyMapper): any => {
+  return (objectTarget: any, propertyName: string) => {
+    const meta = new PropertyMetadata(prop || {}, Number, propertyName)
+    _propertyMetadata.set(propertyName, meta)
+
+    return null
+  }
+}
+
+/**
+ * A decorator for a numeric property in the `.env` file or `process.env`
+ *
+ * @param prop The property mapping definition object
+ */
+export const EnvBoolean = (prop?: BooleanPropertyMapper): any => {
+  return (objectTarget: any, propertyName: string) => {
+    const meta = new PropertyMetadata(prop || {}, Boolean, propertyName)
+
     _propertyMetadata.set(propertyName, meta)
 
     return null
@@ -89,9 +122,12 @@ export const Prop = (prop?: PropertyMapper): any => {
 
 /**
  * Loads the `.env` file and reads its values, overriding them with those found in  `process.env`, and validating that all required values are present.
- * */
+ *
+ * @param envClass The class decorated declaration
+ * @param dotEnvFileName The full path to the `.env` file (Optional, default = process.pwd() + '/.env')
+ */
 export const initialize = <T extends Object>(
-  mapper: { new (): T; [key: string]: any },
+  envClass: { new (): T; [key: string]: any },
   dotEnvFileName: string = '',
 ): EnvResult<T> => {
   const errors = new Array<string>()
@@ -125,7 +161,7 @@ export const initialize = <T extends Object>(
   }
 
   // Create an instance of the passed in class and populate its values
-  const obj: { [key: string]: any } = new mapper()
+  const obj: { [key: string]: any } = new envClass()
 
   _propertyMetadata.forEach((meta: PropertyMetadata, propertyName: string) => {
     let value: any = envValues.get(meta.name)
@@ -133,6 +169,7 @@ export const initialize = <T extends Object>(
       value = process.env[meta.name]
     }
 
+    // Check the value retrieved from `.env` and `process.env`
     if (!value) {
       if (meta.default) {
         value = meta.default()
@@ -145,6 +182,7 @@ export const initialize = <T extends Object>(
       value = parseBoolean(value, errors)
     }
 
+    // Check if the property is optional
     if (!value) {
       if (!meta.optional) {
         errors.push(
@@ -157,14 +195,23 @@ export const initialize = <T extends Object>(
       } else {
         value = ''
       }
+    } else if (meta.type === String && !meta.optional && meta.choices && meta.choices.length > 0) {
+      if (!meta.choices.some(c => c === value)) {
+        errors.push(`'${value}' is not a choice from [${meta.choices.join(', ')}]`)
+      }
     }
 
     obj[propertyName] = value
   })
 
+  // Clear the metadata cache for reuse
+  _propertyMetadata.clear()
+
+  // If there are errors return a failure result
   if (errors.length > 0) {
     return EnvResult.createFailure<T>(errors)
   }
 
+  // Otherwise, return a success result
   return EnvResult.createSuccess<T>(obj as T)
 }

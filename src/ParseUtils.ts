@@ -1,4 +1,4 @@
-import DotEnvError from './DotEnvError'
+import DotEnvError from './dotEnvError'
 
 export const parseNumber = (value: string, errors: string[]): Number => {
   if (!value || value.length == 0) {
@@ -7,6 +7,9 @@ export const parseNumber = (value: string, errors: string[]): Number => {
 
   let result = ''
   let dotCount = 0
+  let symbolCount = 0
+  let expCount = 0
+
   for (let i = 0; i < value.length; i += 1) {
     switch (value[i]) {
       case '0':
@@ -25,17 +28,29 @@ export const parseNumber = (value: string, errors: string[]): Number => {
         dotCount += 1
         result += value[i]
         break
+      case '-':
+      case '+':
+        symbolCount += 1
+        result += value[i]
+        break
+      case 'E':
+      case 'e':
+        expCount += 1
+        result += value[i]
+        break
     }
   }
 
   if (dotCount > 1) {
-    errors.push(`A number cannot have more than on decimal dot int it! (${value})`)
+    errors.push(`A number cannot have more than one decimal dot int it! (${value})`)
   } else if (value.length === 0) {
     errors.push('There were no digits in the string passed in!')
-  } else if (dotCount === 0) {
-    return parseInt(result, 10)
   } else {
-    return parseFloat(result)
+    const no = parseFloat(result)
+    if (isNaN(no)) {
+      errors.push(`'${value}' cannot be parsed as a valid number.`)
+    }
+    return no
   }
 
   return NaN
