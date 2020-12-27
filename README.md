@@ -12,7 +12,7 @@ Create a file (e.g. `environment.ts`) that will define a class to contain the pr
 annotate them with the `@Prop` decorator.
 
 ```js
-import 'reflect-metadata'
+// `environment.ts` file
 import { Prop, initialize } from '../src/index'
 
 export class Env {
@@ -76,6 +76,12 @@ but, any function defined on this class which accesses local variables will be a
 
 - `choices`: An optional array of valid choices; one of which must be the value of the property (By default the check is
   case sensitive).
+- `regex`: A `RegExp` instance to test the property value against.
+
+### Number Property Mapping
+
+- `min`: A minimum (inclusive) value that the property can be
+- `max`: A maximum (inclusive) value that the property can be.
 
 ## Usage
 
@@ -95,16 +101,8 @@ console.log(Env.environment.TEST_STRING)
 
 **NB** `Env.environment` will be an empty object if `Env.hasErrors` is true!
 
-## Completed
-
 ## ToDo
 
-- Add additional test files
-  - For type specific decorators
-- String Property
-  - Add a `regex` option for checking set value
-- Number Property
-  - A min and max value (inclusive)
 - And options object:
   - To prevent `process.env` overwriting a value
   - To throw errors on processing

@@ -7,5 +7,5 @@ coverage/**
 .env
 .prettierrc
 .gitignore
-japaFile.ts
+japaFile.js
 tsconfig.json
