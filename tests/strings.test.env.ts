@@ -1,6 +1,6 @@
 //
 import Path from 'path'
-import { initialize, EnvString, EnvNumber, EnvBoolean } from '../src/index'
+import { initialize, EnvString } from '../src/index'
 
 export class Env {
   @EnvString({ name: 'PROJECT_EMAIL', regex: /^[^\s@]+@\w+(?:\.[^\s@]+)+$/ })

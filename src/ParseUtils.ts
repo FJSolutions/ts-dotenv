@@ -1,4 +1,4 @@
-import DotEnvError from './dotEnvError'
+import DotEnvError from './typeEnvError'
 
 export const parseNumber = (value: string, errors: string[]): Number => {
   if (!value || value.length == 0) {
@@ -7,8 +7,8 @@ export const parseNumber = (value: string, errors: string[]): Number => {
 
   let result = ''
   let dotCount = 0
-  let symbolCount = 0
-  let expCount = 0
+  // let symbolCount = 0
+  // let expCount = 0
 
   for (let i = 0; i < value.length; i += 1) {
     switch (value[i]) {
@@ -30,12 +30,12 @@ export const parseNumber = (value: string, errors: string[]): Number => {
         break
       case '-':
       case '+':
-        symbolCount += 1
+        // symbolCount += 1
         result += value[i]
         break
       case 'E':
       case 'e':
-        expCount += 1
+        // expCount += 1
         result += value[i]
         break
     }

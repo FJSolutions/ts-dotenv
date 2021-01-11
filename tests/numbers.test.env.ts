@@ -1,5 +1,5 @@
 import Path from 'path'
-import { initialize, EnvString, EnvNumber, EnvBoolean } from '../src/index'
+import { initialize, EnvNumber } from '../src/index'
 
 export class Env {
   @EnvNumber({ name: 'TOO_SMALL_NUMBER', min: 0 })

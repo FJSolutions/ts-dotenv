@@ -3,9 +3,9 @@ import Env from './default.test.env'
 
 test.group('Basic success tests', () => {
   test('Test Reading config file', assert => {
+    // console.log(Env)
     assert.isDefined(Env)
     assert.isFalse(Env.hasErrors)
-    console.log(Env)
   })
 
   test('Test executing a method works', assert => {

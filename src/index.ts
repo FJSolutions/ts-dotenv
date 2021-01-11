@@ -1,82 +1,11 @@
-import path from 'path'
-import fs from 'fs'
-// import DotEnvError from './dotEnvError'
+import { PropertyMetadata } from './propertyMetadata'
+import { EnvResult } from './typeEnvResult'
 import { parseBoolean, parseNumber } from './parseUtils'
-import { Type, StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper, CommonPropertyMapper } from './types'
+import { StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper } from './types'
+import { readEnvFile } from './typeEnvInitialize'
 
 /** Private module-level property that holds the property metadata */
 const _propertyMetadata = new Map<string, PropertyMetadata>()
-
-/** Private class that holds the normalized property metadata */
-class PropertyMetadata implements CommonPropertyMapper {
-  constructor(
-    mapper: CommonPropertyMapper,
-    type: Type,
-    public propertyName: string,
-    choices?: string[],
-    regex?: RegExp,
-    min?: number,
-    max?: number,
-  ) {
-    this.name = mapper.name || propertyName
-    this.type = type || String
-    this.optional = mapper.optional || false
-    this.default = mapper.default || undefined
-    this.choices = choices
-    this.regex = regex
-    this.min = min
-    this.max = max
-  }
-
-  public readonly name: string
-
-  public readonly type: Type
-
-  public readonly optional: boolean
-
-  public readonly default?: () => any
-
-  public readonly choices?: string[]
-
-  public readonly regex?: RegExp
-
-  public readonly min?: number
-
-  public readonly max?: number
-}
-
-class EnvResult<T extends Object> {
-  private constructor(private _env: T = {} as T, private _errors: readonly string[]) {}
-
-  /**
-   * Gets the populated environment class, or and empty object if there were loading errors.
-   */
-  public get environment(): T {
-    return this._env
-  }
-
-  /**
-   * Gets the list of errors
-   */
-  public get errors(): readonly string[] {
-    return this._errors
-  }
-
-  /**
-   * Indicates whether this is an error result or not
-   */
-  public get hasErrors(): boolean {
-    return this._errors && this._errors.length > 0 ? true : false
-  }
-
-  public static createSuccess<T extends Object>(env: T) {
-    return new EnvResult<T>(env, Object.freeze([]))
-  }
-
-  public static createFailure<T extends Object>(errors: string[]) {
-    return new EnvResult<T>({} as T, Object.freeze(errors))
-  }
-}
 
 /**
  * A decorator for a string property in the `.env` file or `process.env`
@@ -85,8 +14,9 @@ class EnvResult<T extends Object> {
  */
 export const EnvString = (prop?: StringPropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
+    const key = `${objectTarget.constructor.name}.${propertyName}`
     const meta = new PropertyMetadata(prop || {}, String, propertyName, prop?.choices, prop?.regex)
-    _propertyMetadata.set(propertyName, meta)
+    _propertyMetadata.set(key, meta)
 
     return null
   }
@@ -99,8 +29,9 @@ export const EnvString = (prop?: StringPropertyMapper): any => {
  */
 export const EnvNumber = (prop?: NumberPropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
+    const key = `${objectTarget.constructor.name}.${propertyName}`
     const meta = new PropertyMetadata(prop || {}, Number, propertyName, [], undefined, prop?.min, prop?.max)
-    _propertyMetadata.set(propertyName, meta)
+    _propertyMetadata.set(key, meta)
 
     return null
   }
@@ -113,9 +44,27 @@ export const EnvNumber = (prop?: NumberPropertyMapper): any => {
  */
 export const EnvBoolean = (prop?: BooleanPropertyMapper): any => {
   return (objectTarget: any, propertyName: string) => {
+    const key = `${objectTarget.constructor.name}.${propertyName}`
     const meta = new PropertyMetadata(prop || {}, Boolean, propertyName)
 
-    _propertyMetadata.set(propertyName, meta)
+    _propertyMetadata.set(key, meta)
+
+    return null
+  }
+}
+
+/**
+ * A decorator for a numeric property in the `.env` file or `process.env`
+ *
+ * @param prop The property mapping definition object
+ */
+export const EnvObject = (): any => {
+  return (objectTarget: any, propertyName: string) => {
+    // console.log('Property Name: %s.%s', objectTarget.constructor.name, propertyName)
+
+    // const meta = new PropertyMetadata(prop || {}, Boolean, propertyName)
+
+    // _propertyMetadata.set(propertyName, meta)
 
     return null
   }
@@ -125,57 +74,40 @@ export const EnvBoolean = (prop?: BooleanPropertyMapper): any => {
  * Loads the `.env` file and reads its values, overriding them with those found in  `process.env`, and validating that all required values are present.
  *
  * @param envClass The class decorated declaration
- * @param dotEnvFileName The full path to the `.env` file (Optional, default = process.pwd() + '/.env')
+ * @param dotEnvFilePath The full file name and path to the `.env` file (Optional, default = process.pwd() + '/.env')
  */
 export const initialize = <T extends Object>(
   envClass: { new (): T; [key: string]: any },
-  dotEnvFileName: string = '',
+  dotEnvFilePath: string = '',
 ): EnvResult<T> => {
+  // Setup the error list
   const errors = new Array<string>()
 
-  // Find the .env file and read it into a Map
-  const fileName = dotEnvFileName || path.join(process.cwd(), '.env')
-
-  try {
-    fs.accessSync(fileName)
-  } catch (e) {
-    errors.push(`The .env file (${fileName}) does not exist`)
-    return EnvResult.createFailure<T>(errors)
+  // Read the `.env` file and get its values
+  const result = readEnvFile(errors, dotEnvFilePath)
+  if (result === false) {
+    return EnvResult.createFailure(errors)
   }
-
-  let envValues: Map<string, string>
-  try {
-    envValues = fs
-      .readFileSync(fileName, { encoding: 'utf8' })
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => l.length > 0 && l[0] !== '#')
-      .map(l => l.split('='))
-      .reduce((acc, l) => {
-        acc.set(l[0], l[1])
-        return acc
-      }, new Map<string, string>())
-    // console.log(envValues)
-  } catch (e) {
-    errors.push(`There was a problem reading the .env file (${e.message})`)
-    return EnvResult.createFailure<T>(errors)
-  }
+  const envValues = result as Map<string, string>
 
   // Create an instance of the passed in class and populate its values
   const obj: { [key: string]: any } = new envClass()
 
   _propertyMetadata.forEach((meta: PropertyMetadata, propertyName: string) => {
+    const propertyPath = propertyName.split('.')
+    console.log(propertyPath)
+
     let value: any = envValues.get(meta.name)
     if (process.env[meta.name]) {
       value = process.env[meta.name]
     }
 
-    // Check the value retrieved from `.env` and `process.env`
+    // Check the value retrieved from the `.env` file and `process.env`
     if (!value) {
       if (meta.default) {
         value = meta.default()
       } else {
-        value = obj[propertyName]
+        value = obj[meta.propertyName]
       }
     } else if (meta.type === Number) {
       value = parseNumber(value, errors)
@@ -204,7 +136,7 @@ export const initialize = <T extends Object>(
       }
 
       if (meta.regex) {
-        console.log(`Testing '${value}' with '${meta.regex.source}': '${meta.regex.test(value)}' `)
+        // console.log(`Testing '${value}' with '${meta.regex.source}': '${meta.regex.test(value)}' `)
 
         if (!meta.regex.test(value)) {
           errors.push(
@@ -226,8 +158,12 @@ export const initialize = <T extends Object>(
       }
     }
 
-    obj[propertyName] = value
+    // console.log(meta.propertyName + ' = ' + value)
+    obj[meta.propertyName] = value
+    // console.log(obj)
   })
+
+  // TODO: Validate the created object against the meta-data rules
 
   // Clear the metadata cache for reuse
   _propertyMetadata.clear()

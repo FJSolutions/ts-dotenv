@@ -3,7 +3,8 @@
 Is a strongly `TypeScript` module for accessing values from a .env file and process.env and providing a strongly typed
 interface to those properties using decorators.
 
-I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use decorators instead of a configuration object.
+I really liked [Leo Baker Hytch's `ts-dotenv`](https://github.com/LeoBakerHytch/ts-dotenv) project but wanted it to use
+decorators instead of a configuration object.
 
 ## Configuration
 
@@ -16,16 +17,16 @@ import { Prop, initialize } from '../src/index'
 
 export class Env {
   @EnvNumber({ name: 'TEST_INT', optional: false })
-  public age?: number
+  public age: 0
 
   @EnvString()
-  public TEST_STRING?: string
+  public TEST_STRING: ''
 
   @EnvString({ name: 'FIRST_NAME' })
-  public firstName?: string
+  public firstName: ''
 
   @EnvString({ name: 'SURNAME' })
-  public surname?: string
+  public surname: ''
 
   @EnvBoolean({ default: () => true })
   public TEST_BOOL?: boolean
@@ -44,9 +45,12 @@ export class Env {
   }
 }
 
-export const env = initialize(Env)
+const dotEnv = initialize(Env)
 
-export default env
+// Be aware that this export will be `undefined` if there were errors
+export const env = dotEnv.environment
+
+export default dotEnv
 ```
 
 **NB**
@@ -102,9 +106,17 @@ console.log(Env.environment.TEST_STRING)
 
 ## ToDo
 
-- And options object:
+- Add a @EnvObject decorator to mark a property as a sub-object with @Env attributed properties
+  - Modularize the setting of property values
+  - Extract the validation logic from the property setting logic
+- Add a new validation step after setting the created object's properties
+  - Ensure that all properties have been set on the object (not just the values in the `.env` file)
+  - Freeze the object (but not it's prototype)
+- Add an attribute base-option for making a `.env` value optional based on another property
+  - A single property with a function that has access to the newly created (but un-validated) `dotEnv` object
+- Add an options object:
   - To prevent `process.env` overwriting a value
   - To throw errors on processing
-  - Case insensitive matching
+  - Case insensitive value matching/comparison
   - Extended matching of Booleans
-    - Supply own list of options
+    - Supply own list of options to evaluate to `true` and `false`

@@ -7,6 +7,6 @@ test.group('Testing number property decorators', () => {
     assert.isNotNull(env.environment)
     assert.isTrue(env.hasErrors)
 
-    console.log(env)
+    // console.log(env)
   })
 })
