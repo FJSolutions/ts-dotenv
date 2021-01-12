@@ -18,6 +18,6 @@ export class Env {
   public NODE_ENV = 'Development'
 }
 
-export const env = initialize(Env, Path.join(__dirname, 'error-test.env'))
+export const env = initialize(Env, undefined, Path.join(__dirname, 'error-test.env'))
 
 export default env

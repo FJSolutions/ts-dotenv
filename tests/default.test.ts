@@ -1,10 +1,11 @@
 import test from 'japa'
 import Env from './default.test.env'
 
-test.group('Basic success tests', () => {
+test.group('Initial success tests', () => {
   test('Test Reading config file', assert => {
     // console.log(Env)
-    assert.isDefined(Env)
+
+    assert.exists(Env)
     assert.isFalse(Env.hasErrors)
   })
 

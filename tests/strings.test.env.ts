@@ -7,6 +7,6 @@ export class Env {
   public email = ''
 }
 
-export const env = initialize(Env, Path.join(__dirname, 'strings-test.env'))
+export const env = initialize(Env, undefined, Path.join(__dirname, 'strings-test.env'))
 
 export default env

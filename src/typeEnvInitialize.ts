@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 
-export const readEnvFile = <T>(errors: string[], dotEnvFilePath: string = ''): Map<string, string> | boolean => {
+export const readEnvFile = <T>(errors: string[], dotEnvFilePath?: string): Map<string, string> | boolean => {
   // Find the .env file and read it into a Map
   const fileName = dotEnvFilePath || path.join(process.cwd(), '.env')
 

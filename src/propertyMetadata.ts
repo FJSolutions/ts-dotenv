@@ -1,4 +1,4 @@
-import { Type, CommonPropertyMapper } from './types'
+import { Type, CommonPropertyMapper, ConditionallyOptionalFunction } from './types'
 
 /** Private class that holds the normalized property metadata */
 export class PropertyMetadata implements CommonPropertyMapper {
@@ -15,6 +15,7 @@ export class PropertyMetadata implements CommonPropertyMapper {
     this.type = type || String
     this.optional = mapper.optional || false
     this.default = mapper.default || undefined
+    this.optionalCondition = mapper.optionalCondition
     this.choices = choices
     this.regex = regex
     this.min = min
@@ -25,7 +26,7 @@ export class PropertyMetadata implements CommonPropertyMapper {
 
   public readonly type: Type
 
-  public readonly optional: boolean
+  public optional: boolean
 
   public readonly default?: () => any
 
@@ -36,4 +37,10 @@ export class PropertyMetadata implements CommonPropertyMapper {
   public readonly min?: number
 
   public readonly max?: number
+
+  public value?: any
+
+  public propertyPath?: string[]
+
+  public readonly optionalCondition?: ConditionallyOptionalFunction
 }

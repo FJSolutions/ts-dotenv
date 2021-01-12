@@ -23,14 +23,14 @@ export class Env {
   @EnvString({ name: 'TEMP' })
   public TempFolder?: string
 
-  @EnvString({ choices: ['development', 'production'] })
-  public NODE_ENV = 'development'
+  @EnvString({ choices: ['development', 'production'], default: () => 'development' })
+  public NODE_ENV = ''
 
   fullName() {
     return `${this.firstName} ${this.surname}`.trim()
   }
 }
 
-export const env = initialize(Env, Path.join(__dirname, 'default-test.env'))
+export const env = initialize(Env, undefined, Path.join(__dirname, 'default-test.env'))
 
 export default env

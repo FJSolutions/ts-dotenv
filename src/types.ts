@@ -1,5 +1,7 @@
 export type Type = StringConstructor | NumberConstructor | BooleanConstructor
 
+export type ConditionallyOptionalFunction = (obj: any) => boolean
+
 export interface CommonPropertyMapper {
   /**
    * The name of the property in the `.env` file, or in `process.env`
@@ -15,6 +17,11 @@ export interface CommonPropertyMapper {
    * A function that will create a default value for the property
    */
   default?: () => any
+
+  /**
+   * A function that receives the populated root Env object so that it can check whether it is optional or not based on some custom logic.
+   */
+  optionalCondition?: ConditionallyOptionalFunction
 }
 
 export interface StringPropertyMapper extends CommonPropertyMapper {
@@ -57,3 +64,5 @@ export interface BooleanPropertyMapper extends CommonPropertyMapper {
    */
   default?: () => Boolean
 }
+
+export type ctor<T> = { new (): T; [key: string]: any }

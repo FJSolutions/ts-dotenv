@@ -1,4 +1,6 @@
+import { isJsxFragment } from 'typescript'
 import DotEnvError from './typeEnvError'
+import { EnvOptions } from './typeEnvOptions'
 
 export const parseNumber = (value: string, errors: string[]): Number => {
   if (!value || value.length == 0) {
@@ -56,25 +58,41 @@ export const parseNumber = (value: string, errors: string[]): Number => {
   return NaN
 }
 
-export const parseBoolean = (value: string, errors: string[]): boolean => {
+export const parseBoolean = (value: string, errors: string[], options: EnvOptions): boolean => {
   if (!value || value.length == 0) {
     errors.push('You must supply a string representation of a boolean to parse, it cannot be blank!')
     return false
   }
 
-  switch (value.trim().toLocaleLowerCase()) {
-    case 'true':
-    case 'on':
-    case 'yes':
-    case '1':
-      return true
-    case 'false':
-    case 'off':
-    case 'no':
-    case '0':
-      return false
-    default:
-      errors.push(`The value '${value}' cannot be parsed as a boolean`)
-      return false
+  const boolString = value.trim()
+  let comparisonOptions = { sensitivity: 'variant' }
+  if (!options.caseSensitive) {
+    comparisonOptions.sensitivity = 'base'
   }
+
+  if (boolString.localeCompare('true', 'en', comparisonOptions) === 0) return true
+  if (boolString.localeCompare('false', 'en', comparisonOptions) === 0) return false
+
+  if (options?.boolean?.extended && options?.boolean?.matches) {
+    const [trues, falses] = options.boolean.matches
+
+    for (let i = 0; i < trues.length; i++) {
+      const trueOption = trues[i]
+      if (boolString.localeCompare(trueOption, 'en', comparisonOptions) === 0) {
+        // console.log(trueOption)
+        return true
+      }
+    }
+
+    for (let i = 0; i < falses.length; i++) {
+      const falseOption = falses[i]
+      if (boolString.localeCompare(falseOption, 'en', comparisonOptions) === 0) {
+        // console.log(falseOption)
+        return false
+      }
+    }
+  }
+
+  errors.push(`The value '${value}' cannot be parsed as a boolean`)
+  return false
 }

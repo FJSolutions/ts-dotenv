@@ -86,6 +86,70 @@ but, any function defined on this class which accesses local variables will be a
 - `min`: A minimum (inclusive) value that the property can be
 - `max`: A maximum (inclusive) value that the property can be.
 
+### Sub-Object Property Mapping
+
+For organizational purposes a property can be of a type that also has mapped properties.
+
+```js
+import { EnvNumber, EnvObject, EnvString, initialize } from '../src/'
+
+class Credentials {
+  @EnvString({ name: 'SMTP_USER' })
+  public userName = ''
+
+  @EnvString({ name: 'SMTP_PASSWORD' })
+  public password = ''
+}
+
+class Smtp {
+  @EnvString({ name: 'SMTP_HOST' })
+  public host = ''
+
+  @EnvNumber({ name: 'SMTP_PORT' })
+  public port = 0
+
+  @EnvObject(Credentials)
+  public credentials = new Credentials()
+}
+
+class Env {
+  @EnvString({ name: 'BCC_EMAIL' })
+  public bccAddress = ''
+
+  @EnvObject(Smtp)
+  public smtp = new Smtp()
+}
+
+const dotEnv = initialize(Env)
+
+export const env = dotEnv.environment
+
+export default dotEnv
+
+```
+
+- Note that the entry point class (or root class) is passed to the `initialize()` method, and the property types are
+  passed to the `@EnvObject()` attribute.
+- When defining these properties, always initialize them by creating an instance of the mapped type.
+- These properties can be nested arbitrarily deep, but as they are only for organizational purposes deep nesting is
+  discouraged.
+
+The result of executing this code against a valid `.env` file will produce something like the following:
+
+```js
+Env {
+  bccAddress: 'bcc.sales@eample.com',
+  smtp: Smtp {
+    host: 'smtp.example.com',
+    port: 2525,
+    credentials: Credentials {
+      userName: 'someone',
+      password: '$p@ssw0rd'
+    }
+  }
+}
+```
+
 ## Usage
 
 Import the module in the main entry point of the application and check if there are errors. If there are then log them
@@ -102,21 +166,11 @@ if (Env.hasErrors) {
 console.log(Env.environment.TEST_STRING)
 ```
 
-**NB** `Env.environment` will be an empty object if `Env.hasErrors` is true!
+**N.B.** `Env.environment` will be an empty object if `Env.hasErrors` is true!
 
+<!--
 ## ToDo
 
-- Add a @EnvObject decorator to mark a property as a sub-object with @Env attributed properties
-  - Modularize the setting of property values
-  - Extract the validation logic from the property setting logic
-- Add a new validation step after setting the created object's properties
-  - Ensure that all properties have been set on the object (not just the values in the `.env` file)
-  - Freeze the object (but not it's prototype)
-- Add an attribute base-option for making a `.env` value optional based on another property
-  - A single property with a function that has access to the newly created (but un-validated) `dotEnv` object
 - Add an options object:
-  - To prevent `process.env` overwriting a value
-  - To throw errors on processing
-  - Case insensitive value matching/comparison
-  - Extended matching of Booleans
-    - Supply own list of options to evaluate to `true` and `false`
+
+-->
