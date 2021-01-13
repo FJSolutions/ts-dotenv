@@ -138,7 +138,7 @@ The result of executing this code against a valid `.env` file will produce somet
 
 ```js
 Env {
-  bccAddress: 'bcc.sales@eample.com',
+  bccAddress: 'bcc.sales@example.com',
   smtp: Smtp {
     host: 'smtp.example.com',
     port: 2525,
@@ -168,9 +168,9 @@ console.log(Env.environment.TEST_STRING)
 
 **N.B.** `Env.environment` will be an empty object if `Env.hasErrors` is true!
 
-<!--
 ## ToDo
 
 - Add an options object:
-
--->
+  - Numeric options
+    - Decimal point indicator
+    - Thousands separator

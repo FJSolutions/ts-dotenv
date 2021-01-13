@@ -24,5 +24,34 @@ export type EnvOptions = {
      * The extended list of matches to use (default = [[on, yes, 1][off, no, 0]])
      */
     matches?: [string[], string[]]
+
+    /**
+     * Indicates whether to parse boolean values from the `.env` file in a case-sensitive way (default = false, boolean string values are case insensitive)
+     *
+     * *NB* This property can be set independently of the general case sensitivity option for parting only boolean values
+     */
+    caseSensitive?: boolean
   }
+}
+
+export const normalizeOptions = (options?: EnvOptions): Readonly<Required<EnvOptions>> => {
+  const defaults: Required<EnvOptions> = {
+    caseSensitive: true,
+    processEnvOverwrites: true,
+    throwErrors: false,
+    boolean: {
+      extended: true,
+      matches: [
+        ['on', 'yes', '1'],
+        ['off', 'no', '0'],
+      ],
+      caseSensitive: false,
+    },
+  }
+
+  // First one populates the
+  const normalized = { ...defaults, ...options }
+  // console.log(normalized)
+
+  return normalized
 }

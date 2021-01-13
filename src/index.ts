@@ -4,7 +4,7 @@ import { parseBoolean, parseNumber } from './parseUtils'
 import { StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper, ctor } from './types'
 import { readEnvFile } from './typeEnvInitialize'
 import { TypeEnvMetadata } from './typeEnvMetadata'
-import { EnvOptions } from './typeEnvOptions'
+import { EnvOptions, normalizeOptions } from './typeEnvOptions'
 
 export { EnvOptions } from './typeEnvOptions'
 
@@ -78,7 +78,7 @@ export const initialize = <T extends Object>(
   const errors = new Array<string>()
 
   // Normalize the options object
-  const options = _normalizeOptions(envOptions)
+  const options = normalizeOptions(envOptions)
 
   // Read the `.env` file and get its result & values
   const result = readEnvFile(errors, dotEnvFilePath)
@@ -213,23 +213,4 @@ const _createEnvObject = <T>(envClass: ctor<T>) => {
 
   // Otherwise, return a success result
   return env as T
-}
-
-const _normalizeOptions = (options?: EnvOptions): EnvOptions => {
-  const defaults: EnvOptions = {
-    caseSensitive: true,
-    processEnvOverwrites: true,
-    throwErrors: false,
-    boolean: {
-      extended: true,
-      matches: [
-        ['on', 'yes', '1'],
-        ['off', 'no', '0'],
-      ],
-    },
-  }
-
-  const normalized = { ...defaults, ...options }
-  // console.log(normalized)
-  return normalized
 }

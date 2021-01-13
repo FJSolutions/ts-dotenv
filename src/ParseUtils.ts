@@ -58,16 +58,24 @@ export const parseNumber = (value: string, errors: string[]): Number => {
   return NaN
 }
 
-export const parseBoolean = (value: string, errors: string[], options: EnvOptions): boolean => {
+export const parseBoolean = (value: string, errors: string[], options: Required<EnvOptions>): boolean => {
   if (!value || value.length == 0) {
     errors.push('You must supply a string representation of a boolean to parse, it cannot be blank!')
     return false
   }
 
   const boolString = value.trim()
-  let comparisonOptions = { sensitivity: 'variant' }
-  if (!options.caseSensitive) {
-    comparisonOptions.sensitivity = 'base'
+  /**
+   * "base": Only strings that differ in base letters compare as unequal. Examples: a ≠ b, a = á, a = A (case insensitive).
+   *
+   * "variant": Strings that differ in base letters, accents and other diacritic marks, or case compare as
+   * unequal. Other differences may also be taken into consideration. Examples: a ≠ b, a ≠ á, a ≠ A (case sensitive).
+   *
+   * *NB* The default should be case-sensitive unless either `option` overrides it.
+   */
+  let comparisonOptions = { sensitivity: 'variant' } // = Sensitive
+  if (!options.caseSensitive || !options.boolean.caseSensitive) {
+    comparisonOptions.sensitivity = 'base' // = Insensitive
   }
 
   if (boolString.localeCompare('true', 'en', comparisonOptions) === 0) return true
