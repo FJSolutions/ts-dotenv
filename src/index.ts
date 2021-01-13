@@ -103,7 +103,7 @@ export const initialize = <T extends Object>(
         value = meta.default()
       }
     } else if (meta.type === Number) {
-      value = parseNumber(value, errors)
+      value = parseNumber(value, errors, options)
     } else if (meta.type === Boolean) {
       value = parseBoolean(value, errors, options)
     }

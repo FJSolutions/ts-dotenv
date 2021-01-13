@@ -12,6 +12,8 @@ export class Env {
   public pi = 0
 }
 
-export const env = initialize(Env, undefined, Path.join(__dirname, 'numbers-test.env'))
+const dotEnv = initialize(Env, undefined, Path.join(__dirname, 'numbers-test.env'))
 
-export default env
+export const env = dotEnv.environment
+
+export default dotEnv

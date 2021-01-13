@@ -167,10 +167,3 @@ console.log(Env.environment.TEST_STRING)
 ```
 
 **N.B.** `Env.environment` will be an empty object if `Env.hasErrors` is true!
-
-## ToDo
-
-- Add an options object:
-  - Numeric options
-    - Decimal point indicator
-    - Thousands separator

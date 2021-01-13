@@ -2,57 +2,59 @@ import { isJsxFragment } from 'typescript'
 import DotEnvError from './typeEnvError'
 import { EnvOptions } from './typeEnvOptions'
 
-export const parseNumber = (value: string, errors: string[]): Number => {
+export const parseNumber = (value: string, errors: string[], options: Required<EnvOptions>): Number => {
   if (!value || value.length == 0) {
     throw new DotEnvError('You must supply a string representation of a number to parse, it cannot be blank!')
   }
 
   let result = ''
-  let dotCount = 0
-  // let symbolCount = 0
-  // let expCount = 0
+  let decimalPointCount = 0
+  let expCount = 0
 
   for (let i = 0; i < value.length; i += 1) {
-    switch (value[i]) {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        result += value[i]
-        break
-      case '.':
-        dotCount += 1
-        result += value[i]
-        break
-      case '-':
-      case '+':
-        // symbolCount += 1
-        result += value[i]
-        break
-      case 'E':
-      case 'e':
-        // expCount += 1
-        result += value[i]
-        break
+    const c = value[i]
+
+    if (c >= '0' && c <= '9') {
+      result += c
+    } else if (c === options.numeric.decimalPoint) {
+      decimalPointCount += 1
+      result += c
+    } else if (c === '-' || c === '+') {
+      result += c
+    } else if (c === 'e' || c === 'E') {
+      expCount += 1
+      result += c
+    } else if (!options.numeric.thousandsSeparators.some(sep => sep === c)) {
+      errors.push(
+        `The number '${value}' contains characters that are not valid, and have not been identified as thousands separators (['${options.numeric.thousandsSeparators.join(
+          "','",
+        )}'])`,
+      )
+      result = ''
+      break
     }
   }
 
-  if (dotCount > 1) {
-    errors.push(`A number cannot have more than one decimal dot int it! (${value})`)
+  if (result.length === 0) {
+    return NaN
+  }
+
+  if (!/^(-|\+)?(\d+)([\.|,]\d+)?(e(-|\+)?\d+)?$/m) {
+    errors.push(`"${value}" doesn't appear to be a valid number`)
+  }
+
+  if (decimalPointCount > 1) {
+    errors.push(`A number cannot have more than one decimal point in a number (${value})`)
+  } else if (expCount > 1) {
+    errors.push(`There cannot be more than a single 'e' as an exponent indicator in the number (${value})`)
   } else if (value.length === 0) {
     errors.push('There were no digits in the string passed in!')
   } else {
-    const no = parseFloat(result)
-    if (isNaN(no)) {
+    const num = parseFloat(result)
+    if (isNaN(num)) {
       errors.push(`'${value}' cannot be parsed as a valid number.`)
     }
-    return no
+    return num
   }
 
   return NaN

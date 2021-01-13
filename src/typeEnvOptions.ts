@@ -32,6 +32,18 @@ export type EnvOptions = {
      */
     caseSensitive?: boolean
   }
+
+  numeric?: {
+    /**
+     * The character that represents the decimal point (default = '.')
+     */
+    decimalPoint: string
+
+    /**
+     * A list of possible characters to treat as thousand separators (default = [' ', ',', '_'])
+     */
+    thousandsSeparators: string[]
+  }
 }
 
 export const normalizeOptions = (options?: EnvOptions): Readonly<Required<EnvOptions>> => {
@@ -46,6 +58,10 @@ export const normalizeOptions = (options?: EnvOptions): Readonly<Required<EnvOpt
         ['off', 'no', '0'],
       ],
       caseSensitive: false,
+    },
+    numeric: {
+      decimalPoint: '.',
+      thousandsSeparators: [' ', ',', '_'],
     },
   }
 
