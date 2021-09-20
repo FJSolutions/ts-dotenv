@@ -4,7 +4,8 @@ import { StringPropertyMapper, NumberPropertyMapper, BooleanPropertyMapper, ctor
 type ObjectProperty = {
   typeName: string
   propertyName: string
-  propertyType: string
+  propertyType: { [key: string]: any; new (): {} }
+  propertyTypeName: string
 }
 
 export class TypeEnvMetadata {
@@ -13,6 +14,10 @@ export class TypeEnvMetadata {
 
   public get PropertyMetadata() {
     return this._propertyMetadata
+  }
+
+  public get ObjectMetadata() {
+    return this._objectMetadata
   }
 
   public clear() {
@@ -48,7 +53,8 @@ export class TypeEnvMetadata {
     const prop: ObjectProperty = {
       propertyName,
       typeName: objectTarget.constructor.name,
-      propertyType: new propertyType().constructor.name,
+      propertyType: new propertyType().constructor,
+      propertyTypeName: new propertyType().constructor.name,
     }
 
     this._objectMetadata.push(prop)
@@ -69,7 +75,7 @@ export class TypeEnvMetadata {
         const newPath = new Array<string>()
         let propertyType = path[0]
         while (true) {
-          const parentObjectMetadata = this._objectMetadata.find(o => o.propertyType === propertyType)
+          const parentObjectMetadata = this._objectMetadata.find(o => o.propertyTypeName === propertyType)
           if (parentObjectMetadata) {
             newPath.unshift(parentObjectMetadata.propertyName)
 

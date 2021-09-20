@@ -83,13 +83,14 @@ export const initialize = <T extends Object>(
   // Read the `.env` file and get its result & values
   const result = readEnvFile(errors, dotEnvFilePath)
 
+  // Process the result
   if (result === false) {
     return EnvResult.createFailure(errors)
   }
+
   const envValues = result as Map<string, string>
 
   // Loop the property metadata
-  const obj: { [key: string]: any } = new envClass()
   _metadata.PropertyMetadata.forEach((meta: PropertyMetadata, propertyName: string) => {
     // Get the value from the env file and/or `process.env`
     let value: any = envValues.get(meta.name)
@@ -190,11 +191,17 @@ const _validateMetadata = <T>(errors: string[], options: EnvOptions, env: T) => 
   })
 }
 
-const _createEnvObject = <T>(envClass: ctor<T>) => {
+/**
+ *
+ * @param envClass Create the instance of the custom `Env` class that has been decorated
+ *
+ * @returns A populated `Env` sub-class
+ */
+const _createEnvObject = <T>(envClass: { new (): T }) => {
   // extract the canonical property path
   _metadata.setPropertyPaths(envClass)
 
-  // Create an instance of the passed in class and populate its values
+  // Create an instance of the passed-in class and populate its values
   const env: { [key: string]: any } = new envClass()
 
   // Loop the
@@ -204,6 +211,15 @@ const _createEnvObject = <T>(envClass: ctor<T>) => {
     if (meta.propertyPath) {
       for (let i = 0; i < meta.propertyPath.length - 1; i++) {
         const propertyName = meta.propertyPath[i]
+
+        // Creating a object new property instance
+        if (!obj[propertyName]) {
+          const objProperty = _metadata.ObjectMetadata.find(om => om.propertyName == propertyName)
+          if (typeof objProperty !== 'undefined') {
+            obj[propertyName] = new objProperty.propertyType()
+          }
+        }
+
         obj = obj[propertyName]
       }
     }

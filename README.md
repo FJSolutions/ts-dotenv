@@ -13,26 +13,26 @@ annotate them with the `@Prop` decorator.
 
 ```js
 // `environment.ts` file
-import { Prop, initialize } from '../src/index'
+import { EnvNumber, EnvString, EnvBoolean, initialize } from '../src/index'
 
 export class Env {
   @EnvNumber({ name: 'TEST_INT', optional: false })
-  public age: 0
+  public age!: Number
 
   @EnvString()
-  public TEST_STRING: ''
+  public TEST_STRING!: string
 
   @EnvString({ name: 'FIRST_NAME' })
-  public firstName: ''
+  public firstName!= string
 
   @EnvString({ name: 'SURNAME' })
-  public surname: ''
+  public surname!: string
 
   @EnvBoolean({ default: () => true })
-  public TEST_BOOL?: boolean
+  public TEST_BOOL!: boolean
 
   @EnvBoolean({ optional: true })
-  public TEST_BOOL_TOO = false
+  public TEST_BOOL_TOO!: boolean
 
   @EnvString({ name: 'TEMP' })
   public TempFolder?: string
@@ -55,8 +55,6 @@ export default dotEnv
 
 **NB**
 
-- The first import in this file is `reflect-metadata`. This must be first in order to ensure that the decorators work
-  properly.
 - Initializing the properties in this class is safe, because these values will be overwritten if the module is
   initialized successfully, or used as a default value if no `default` function is provided.
 
@@ -109,7 +107,7 @@ class Smtp {
   public port = 0
 
   @EnvObject(Credentials)
-  public credentials = new Credentials()
+  public credentials!: Credentials
 }
 
 class Env {
@@ -133,6 +131,7 @@ export default dotEnv
 - When defining these properties, always initialize them by creating an instance of the mapped type.
 - These properties can be nested arbitrarily deep, but as they are only for organizational purposes deep nesting is
   discouraged.
+- Teh `credentials` property of the `Smtp` type is initialised by the framework if not done in the class declaration.
 
 The result of executing this code against a valid `.env` file will produce something like the following:
 
@@ -156,7 +155,8 @@ Import the module in the main entry point of the application and check if there 
 and terminate the application, otherwise the application can continue and access the values read from the `.env` file.
 
 ```js
-import Env from './environment'
+import { exit } from 'node:process'
+import Env from './environment' // The class file name with the mapping definitions in it
 
 if (Env.hasErrors) {
   console.log(Env.errors)

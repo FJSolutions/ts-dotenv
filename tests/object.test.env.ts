@@ -3,10 +3,10 @@ import { EnvNumber, EnvObject, EnvString, initialize } from '../src/'
 
 class Credentials {
   @EnvString({ name: 'SMTP_USER' })
-  public userName = ''
+  public userName!: string
 
   @EnvString({ name: 'SMTP_PASSWORD' })
-  public password = ''
+  public password!: string
 }
 
 class Smtp {
@@ -17,7 +17,8 @@ class Smtp {
   public port = 0
 
   @EnvObject(Credentials)
-  public credentials = new Credentials()
+  // public credentials = new Credentials()
+  public credentials!: Credentials
 }
 
 class Env {
@@ -25,10 +26,10 @@ class Env {
   public bccAddress = ''
 
   @EnvObject(Smtp)
-  public smtp = new Smtp()
+  public smtp!: Smtp
 }
 
-const dotEnv = initialize(Env, undefined, path.join(__dirname, 'object-test.env'))
+const dotEnv = initialize(Env, {}, path.join(__dirname, 'object-test.env'))
 
 export const env = dotEnv.environment
 

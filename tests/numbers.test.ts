@@ -3,7 +3,7 @@ import dotEnv, { env } from './numbers.test.env'
 
 test.group('Testing number property decorators', () => {
   test('errors when loading violates constraints', assert => {
-    console.log(dotEnv)
+    // console.log(dotEnv)
 
     assert.exists(dotEnv)
     assert.exists(env)
